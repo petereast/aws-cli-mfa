@@ -4,25 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"reflect"
-  "os/exec"
 	"strings"
 )
 
 type Config struct {
 	SecretAccessKey string
-	AccessKeyId string
-	MfaDeviceArn string
+	AccessKeyId     string
+	MfaDeviceArn    string
 }
 
 type Credentials struct {
 	SecretAccessKey string
-	AccessKeyId string
-	SessionToken string `json:"SessionToken,omitempty"`
+	AccessKeyId     string
+	SessionToken    string `json:"SessionToken,omitempty"`
 }
 
 type AwsResponse struct {
-    Credentials Credentials
+	Credentials Credentials
 }
 
 func main() {
@@ -44,39 +44,39 @@ func main() {
 		return
 	}
 
-  var initialCreds Credentials
-  err = json.Unmarshal(jsonBytes, &initialCreds)
-  WriteCredentials(initialCreds)
+	var initialCreds Credentials
+	err = json.Unmarshal(jsonBytes, &initialCreds)
+	WriteCredentials(initialCreds)
 
-  fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
-  var tokenCode string
-  fmt.Scanf("%s", &tokenCode)
+	fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
+	var tokenCode string
+	fmt.Scanf("%s", &tokenCode)
 
-  creds, _ := StsCall(config.MfaDeviceArn, tokenCode)
+	creds, _ := StsCall(config.MfaDeviceArn, tokenCode)
 	// Write this config to .aws/credentials
 	// Call `aws sts get-access-code --mfa-device ARN --token-code
 	// Write the new data to .aws/credentials
 
-	WriteCredentials( creds)
+	WriteCredentials(creds)
 
 }
 
 func StsCall(deviceArn string, tokenCode string) (Credentials, *string) {
-// # aws sts get-session-token --serial-number arn:aws:iam::627518313974:mfa/peter.east@cyted.ai --token-code
-  output, err := exec.Command("aws", "sts", "get-session-token", "--serial-number", deviceArn, "--token-code", tokenCode).Output()
+	// # aws sts get-session-token --serial-number arn:aws:iam::627518313974:mfa/peter.east@cyted.ai --token-code
+	output, err := exec.Command("aws", "sts", "get-session-token", "--serial-number", deviceArn, "--token-code", tokenCode).Output()
 
-  if err != nil {
-    panic("Can't authenticate OTP")
-  }
+	if err != nil {
+		panic("Can't authenticate OTP")
+	}
 
-  var awsResponse AwsResponse
-  err = json.Unmarshal(output, &awsResponse)
+	var awsResponse AwsResponse
+	err = json.Unmarshal(output, &awsResponse)
 
-  if err != nil {
-    panic("Can't parse response from aws")
-  }
+	if err != nil {
+		panic("Can't parse response from aws")
+	}
 
-  return awsResponse.Credentials, nil
+	return awsResponse.Credentials, nil
 }
 
 func WriteCredentials(credentials Credentials) (bool, string) {
@@ -86,7 +86,7 @@ func WriteCredentials(credentials Credentials) (bool, string) {
 	  key = value
 	*/
 
-  ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
+	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
 
 	return false, string("Something went wrong")
 }
@@ -106,9 +106,9 @@ func ConfigEncoder(title string, config interface{}) string {
 		value := values.FieldByName(f.Name).String()
 		name := ToSnakeCase(f.Name)
 
-    if len(value) != 0 {
-      output += fmt.Sprintf("aws%s = %s\n", name, value)
-  }
+		if len(value) != 0 {
+			output += fmt.Sprintf("aws%s = %s\n", name, value)
+		}
 	}
 
 	return output
