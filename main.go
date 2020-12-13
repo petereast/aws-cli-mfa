@@ -26,9 +26,6 @@ type AwsResponse struct {
 }
 
 func main() {
-	fmt.Println("Hello world!")
-	// This will do a few things:
-	// Read the config file from the root directory, to get the aws credentials and the ARN of the mfa device
 	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
 
 	if err != nil {
@@ -40,7 +37,7 @@ func main() {
 	err = json.Unmarshal(jsonBytes, &config)
 
 	if err != nil {
-		fmt.Print("Can't parse file")
+    fmt.Print("Can't parse config file")
 		return
 	}
 
@@ -53,12 +50,9 @@ func main() {
 	fmt.Scanf("%s", &tokenCode)
 
 	creds, _ := StsCall(config.MfaDeviceArn, tokenCode)
-	// Write this config to .aws/credentials
-	// Call `aws sts get-access-code --mfa-device ARN --token-code
-	// Write the new data to .aws/credentials
 
 	WriteCredentials(creds)
-
+  fmt.Println("Done!")
 }
 
 func StsCall(deviceArn string, tokenCode string) (Credentials, *string) {
@@ -79,7 +73,7 @@ func StsCall(deviceArn string, tokenCode string) (Credentials, *string) {
 	return awsResponse.Credentials, nil
 }
 
-func WriteCredentials(credentials Credentials) (bool, string) {
+func WriteCredentials(credentials Credentials) {
 	// We need to encode the credentials into the right format
 	/*
 	  [default]
@@ -87,8 +81,6 @@ func WriteCredentials(credentials Credentials) (bool, string) {
 	*/
 
 	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
-
-	return false, string("Something went wrong")
 }
 
 func ConfigEncoder(title string, config interface{}) string {
