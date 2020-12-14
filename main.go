@@ -25,6 +25,10 @@ type AwsResponse struct {
 	Credentials Credentials
 }
 
+func (credentials Credentials) WriteCredentials() {
+	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
+}
+
 func main() {
 	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
 
@@ -37,50 +41,38 @@ func main() {
 	err = json.Unmarshal(jsonBytes, &config)
 
 	if err != nil {
-    fmt.Print("Can't parse config file")
+		fmt.Print("Can't parse config file")
 		return
 	}
 
 	var initialCreds Credentials
 	err = json.Unmarshal(jsonBytes, &initialCreds)
-	WriteCredentials(initialCreds)
+	initialCreds.WriteCredentials()
 
 	fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
 	var tokenCode string
 	fmt.Scanf("%s", &tokenCode)
 
-	creds, _ := StsCall(config.MfaDeviceArn, tokenCode)
+	creds, err := StsCall(config.MfaDeviceArn, tokenCode)
+	if err != nil {
+		fmt.Print("Error!", err)
+		return
+	}
 
-	WriteCredentials(creds)
-  fmt.Println("Done!")
+	creds.WriteCredentials()
+	fmt.Println("Done!")
 }
 
-func StsCall(deviceArn string, tokenCode string) (Credentials, *string) {
+// TODO: DI the shit out of this
+func StsCall(deviceArn string, tokenCode string) (creds Credentials, err error) {
 	// # aws sts get-session-token --serial-number arn:aws:iam::627518313974:mfa/peter.east@cyted.ai --token-code
 	output, err := exec.Command("aws", "sts", "get-session-token", "--serial-number", deviceArn, "--token-code", tokenCode).Output()
-
-	if err != nil {
-		panic("Can't authenticate OTP")
-	}
 
 	var awsResponse AwsResponse
 	err = json.Unmarshal(output, &awsResponse)
 
-	if err != nil {
-		panic("Can't parse response from aws")
-	}
-
-	return awsResponse.Credentials, nil
-}
-
-func WriteCredentials(credentials Credentials) {
-	// We need to encode the credentials into the right format
-	/*
-	  [default]
-	  key = value
-	*/
-
-	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
+	creds = awsResponse.Credentials
+	return
 }
 
 func ConfigEncoder(title string, config interface{}) string {
