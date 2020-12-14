@@ -26,75 +26,75 @@ type AwsResponse struct {
 }
 
 type AwsLoginClient interface {
-  stsCall(string, string) (Credentials, error)
+	stsCall(string, string) (Credentials, error)
 }
 
 type CredentialWriter interface {
-  writeCredentials(Credentials) error
+	writeCredentials(Credentials) error
 }
 
 type ConfigReader interface {
-  getConfig(string) (Config, error)
+	getConfig(string) (Config, error)
 }
 
 type TokenCodeGetter interface {
-  getTokenCode(config Config) string
+	getTokenCode(config Config) string
 }
 
 type App struct {
-  awsClient AwsLoginClient
-  credentialWriter CredentialWriter
-  configReader ConfigReader
-  tokenCodeGetter TokenCodeGetter
+	awsClient        AwsLoginClient
+	credentialWriter CredentialWriter
+	configReader     ConfigReader
+	tokenCodeGetter  TokenCodeGetter
 }
 
 func (app App) run() error {
-  cfg, err := app.configReader.getConfig("/Users/petereast/.aws/credentials")
-  if err != nil {
-    return err
-  }
+	cfg, err := app.configReader.getConfig("/Users/petereast/.aws/credentials")
+	if err != nil {
+		return err
+	}
 
-  err = app.credentialWriter.writeCredentials(cfg.ToCreds())
-  if err != nil {
-    return err
-  }
+	err = app.credentialWriter.writeCredentials(cfg.ToCreds())
+	if err != nil {
+		return err
+	}
 
-  newCreds, err := app.awsClient.stsCall(cfg.MfaDeviceArn, app.tokenCodeGetter.getTokenCode(cfg))
-  if err != nil {
-    return err
-  }
+	newCreds, err := app.awsClient.stsCall(cfg.MfaDeviceArn, app.tokenCodeGetter.getTokenCode(cfg))
+	if err != nil {
+		return err
+	}
 
-  err = app.credentialWriter.writeCredentials(newCreds)
-  if err != nil {
-    return err
-  }
-  return nil
+	err = app.credentialWriter.writeCredentials(newCreds)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c Config) ToCreds() Credentials {
-  return Credentials {
-    SecretAccessKey: c.SecretAccessKey,
-    AccessKeyId: c.AccessKeyId,
-  }
+	return Credentials{
+		SecretAccessKey: c.SecretAccessKey,
+		AccessKeyId:     c.AccessKeyId,
+	}
 }
 
 // Cred writer
-type FileCredentialWriter struct {}
+type FileCredentialWriter struct{}
 
 func (_ FileCredentialWriter) writeCredentials(creds Credentials) (err error) {
-  err = ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", creds)), 0777)
-  return
+	err = ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", creds)), 0777)
+	return
 }
 
 // Config Getter
-type ConfigGetter struct {}
+type ConfigGetter struct{}
 
 func (_ ConfigGetter) getConfig(string) (config Config, err error) {
 	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
 
 	err = json.Unmarshal(jsonBytes, &config)
 
-  return
+	return
 }
 
 // Done!
@@ -103,20 +103,20 @@ func (credentials Credentials) WriteCredentials() {
 }
 
 func main() {
-  err := App {
-    awsClient: AwsCliLoginClient {},
-    credentialWriter: FileCredentialWriter {},
-    configReader: ConfigGetter {},
-    tokenCodeGetter: ConsoleTokenCodeGetter{},
-  }.run()
-  if err != nil {
-    fmt.Println("Error! ", err)
-  } else {
-  fmt.Println("Done aaaaaaaaaaa!")
-}
+	err := App{
+		awsClient:        AwsCliLoginClient{},
+		credentialWriter: FileCredentialWriter{},
+		configReader:     ConfigGetter{},
+		tokenCodeGetter:  ConsoleTokenCodeGetter{},
+	}.run()
+	if err != nil {
+		fmt.Println("Error! ", err)
+	} else {
+		fmt.Println("Done aaaaaaaaaaa!")
+	}
 }
 
-type AwsCliLoginClient struct {}
+type AwsCliLoginClient struct{}
 
 func (_ AwsCliLoginClient) stsCall(deviceArn string, tokenCode string) (creds Credentials, err error) {
 	// # aws sts get-session-token --serial-number arn:aws:iam::627518313974:mfa/peter.east@cyted.ai --token-code
@@ -129,15 +129,14 @@ func (_ AwsCliLoginClient) stsCall(deviceArn string, tokenCode string) (creds Cr
 	return
 }
 
-type ConsoleTokenCodeGetter struct {}
+type ConsoleTokenCodeGetter struct{}
 
 func (_ ConsoleTokenCodeGetter) getTokenCode(config Config) (tokenCode string) {
 	fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
 	fmt.Scanf("%s", &tokenCode)
 
-  return
+	return
 }
-
 
 func ConfigEncoder(title string, config interface{}) string {
 	// This will read the fields of the interface and create a config file
