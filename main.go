@@ -25,46 +25,100 @@ type AwsResponse struct {
 	Credentials Credentials
 }
 
+type AwsLoginClient interface {
+  stsCall(string, string) (Credentials, error)
+}
+
+type CredentialWriter interface {
+  writeCredentials(Credentials) error
+}
+
+type ConfigReader interface {
+  getConfig(string) (Config, error)
+}
+
+type TokenCodeGetter interface {
+  getTokenCode(config Config) string
+}
+
+type App struct {
+  awsClient AwsLoginClient
+  credentialWriter CredentialWriter
+  configReader ConfigReader
+  tokenCodeGetter TokenCodeGetter
+}
+
+func (app App) run() error {
+  cfg, err := app.configReader.getConfig("/Users/petereast/.aws/credentials")
+  if err != nil {
+    return err
+  }
+
+  err = app.credentialWriter.writeCredentials(cfg.ToCreds())
+  if err != nil {
+    return err
+  }
+
+  newCreds, err := app.awsClient.stsCall(cfg.MfaDeviceArn, app.tokenCodeGetter.getTokenCode(cfg))
+  if err != nil {
+    return err
+  }
+
+  err = app.credentialWriter.writeCredentials(newCreds)
+  if err != nil {
+    return err
+  }
+  return nil
+}
+
+func (c Config) ToCreds() Credentials {
+  return Credentials {
+    SecretAccessKey: c.SecretAccessKey,
+    AccessKeyId: c.AccessKeyId,
+  }
+}
+
+// Cred writer
+type FileCredentialWriter struct {}
+
+func (_ FileCredentialWriter) writeCredentials(creds Credentials) (err error) {
+  err = ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", creds)), 0777)
+  return
+}
+
+// Config Getter
+type ConfigGetter struct {}
+
+func (_ ConfigGetter) getConfig(string) (config Config, err error) {
+	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
+
+	err = json.Unmarshal(jsonBytes, &config)
+
+  return
+}
+
+// Done!
 func (credentials Credentials) WriteCredentials() {
 	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
 }
 
 func main() {
-	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
-
-	if err != nil {
-		fmt.Print("Can't open file")
-		return
-	}
-
-	var config Config
-	err = json.Unmarshal(jsonBytes, &config)
-
-	if err != nil {
-		fmt.Print("Can't parse config file")
-		return
-	}
-
-	var initialCreds Credentials
-	err = json.Unmarshal(jsonBytes, &initialCreds)
-	initialCreds.WriteCredentials()
-
-	fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
-	var tokenCode string
-	fmt.Scanf("%s", &tokenCode)
-
-	creds, err := StsCall(config.MfaDeviceArn, tokenCode)
-	if err != nil {
-		fmt.Print("Error!", err)
-		return
-	}
-
-	creds.WriteCredentials()
-	fmt.Println("Done!")
+  err := App {
+    awsClient: AwsCliLoginClient {},
+    credentialWriter: FileCredentialWriter {},
+    configReader: ConfigGetter {},
+    tokenCodeGetter: ConsoleTokenCodeGetter{},
+  }.run()
+  if err != nil {
+    fmt.Println("Error! ", err)
+  } else {
+  fmt.Println("Done aaaaaaaaaaa!")
+}
 }
 
-// TODO: DI the shit out of this
-func StsCall(deviceArn string, tokenCode string) (creds Credentials, err error) {
+type AwsCliLoginClient struct {}
+
+func (_ AwsCliLoginClient) stsCall(deviceArn string, tokenCode string) (creds Credentials, err error) {
 	// # aws sts get-session-token --serial-number arn:aws:iam::627518313974:mfa/peter.east@cyted.ai --token-code
 	output, err := exec.Command("aws", "sts", "get-session-token", "--serial-number", deviceArn, "--token-code", tokenCode).Output()
 
@@ -74,6 +128,16 @@ func StsCall(deviceArn string, tokenCode string) (creds Credentials, err error) 
 	creds = awsResponse.Credentials
 	return
 }
+
+type ConsoleTokenCodeGetter struct {}
+
+func (_ ConsoleTokenCodeGetter) getTokenCode(config Config) (tokenCode string) {
+	fmt.Printf("Enter token code (device: %s):\n|>", config.MfaDeviceArn)
+	fmt.Scanf("%s", &tokenCode)
+
+  return
+}
+
 
 func ConfigEncoder(title string, config interface{}) string {
 	// This will read the fields of the interface and create a config file
