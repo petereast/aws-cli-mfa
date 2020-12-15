@@ -17,5 +17,5 @@ This will expect you to have a json config file at `~/.aws-mfa.json`. This shoul
 
 ## Next Steps
 - [x] Don't use a hardcoded file path
-- [ ] Split the different things into different files
+- [x] Split the different things into different files
 - [ ] Add unit tests
