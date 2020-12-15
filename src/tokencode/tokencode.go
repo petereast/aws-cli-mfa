@@ -1,14 +1,13 @@
 package tokencode
 
 import (
-  "awsmfacli/config"
-  "fmt"
+	"awsmfacli/config"
+	"fmt"
 )
 
 type TokenCodeGetter interface {
 	GetTokenCode(config config.Config) string
 }
-
 
 // Config Getter
 

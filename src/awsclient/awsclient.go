@@ -1,11 +1,10 @@
 package awsclient
 
 import (
-  "awsmfacli/credentials"
-  "os/exec"
-  "encoding/json"
+	"awsmfacli/credentials"
+	"encoding/json"
+	"os/exec"
 )
-
 
 type AwsResponse struct {
 	Credentials credentials.Credentials
@@ -27,4 +26,3 @@ func (_ AwsCliLoginClient) StsCall(deviceArn string, tokenCode string) (creds cr
 	creds = awsResponse.Credentials
 	return
 }
-

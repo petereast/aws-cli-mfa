@@ -1,9 +1,9 @@
 package encoder
 
 import (
-  "reflect"
-  "fmt"
-  "strings"
+	"fmt"
+	"reflect"
+	"strings"
 )
 
 func ConfigEncoder(title string, config interface{}) string {

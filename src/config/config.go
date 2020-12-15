@@ -1,9 +1,9 @@
 package config
 
 import (
-  "io/ioutil"
-  "awsmfacli/filepaths"
-  "encoding/json"
+	"awsmfacli/filepaths"
+	"encoding/json"
+	"io/ioutil"
 )
 
 type Config struct {
@@ -11,7 +11,6 @@ type Config struct {
 	AccessKeyId     string
 	MfaDeviceArn    string
 }
-
 
 type ConfigReader interface {
 	GetConfig() (Config, error)

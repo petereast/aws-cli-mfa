@@ -1,10 +1,9 @@
 package filepaths
 
 import (
-  "os/user"
-  "fmt"
+	"fmt"
+	"os/user"
 )
-
 
 type UnixFilePaths struct{}
 

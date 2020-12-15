@@ -1,9 +1,9 @@
 package credentials
 
 import (
-  "awsmfacli/filepaths"
-  "awsmfacli/encoder"
-  "io/ioutil"
+	"awsmfacli/encoder"
+	"awsmfacli/filepaths"
+	"io/ioutil"
 )
 
 type Credentials struct {

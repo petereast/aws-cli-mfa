@@ -1,15 +1,14 @@
 package main
 
 import (
-  "fmt"
-  "awsmfacli/app"
-  "awsmfacli/config"
-  "awsmfacli/filepaths"
-  "awsmfacli/credentials"
-  "awsmfacli/awsclient"
-  "awsmfacli/tokencode"
+	"awsmfacli/app"
+	"awsmfacli/awsclient"
+	"awsmfacli/config"
+	"awsmfacli/credentials"
+	"awsmfacli/filepaths"
+	"awsmfacli/tokencode"
+	"fmt"
 )
-
 
 func main() {
 	filePaths := filepaths.UnixFilePaths{}

@@ -1,10 +1,10 @@
 package app
 
 import (
-  "awsmfacli/config"
-  "awsmfacli/credentials"
-  "awsmfacli/awsclient"
-  "awsmfacli/tokencode"
+	"awsmfacli/awsclient"
+	"awsmfacli/config"
+	"awsmfacli/credentials"
+	"awsmfacli/tokencode"
 )
 
 func ToCreds(c config.Config) credentials.Credentials {
@@ -13,8 +13,6 @@ func ToCreds(c config.Config) credentials.Credentials {
 		AccessKeyId:     c.AccessKeyId,
 	}
 }
-
-
 
 type App struct {
 	AwsClient        awsclient.AwsLoginClient
@@ -45,4 +43,3 @@ func (app App) Run() error {
 	}
 	return nil
 }
-
