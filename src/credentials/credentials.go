@@ -1,8 +1,8 @@
 package credentials
 
 import (
-  "awsmfacli/src/filepaths"
-  "awsmfacli/src/encoder"
+  "awsmfacli/filepaths"
+  "awsmfacli/encoder"
   "io/ioutil"
 )
 

@@ -42,4 +42,3 @@ func ToSnakeCase(input string) string {
 
 	return output
 }
-

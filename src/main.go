@@ -2,12 +2,12 @@ package main
 
 import (
   "fmt"
-  "awsmfacli/src/app"
-  "awsmfacli/src/config"
-  "awsmfacli/src/filepaths"
-  "awsmfacli/src/credentials"
-  "awsmfacli/src/awsclient"
-  "awsmfacli/src/tokencode"
+  "awsmfacli/app"
+  "awsmfacli/config"
+  "awsmfacli/filepaths"
+  "awsmfacli/credentials"
+  "awsmfacli/awsclient"
+  "awsmfacli/tokencode"
 )
 
 

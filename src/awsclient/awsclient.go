@@ -1,7 +1,7 @@
 package awsclient
 
 import (
-  "awsmfacli/src/credentials"
+  "awsmfacli/credentials"
   "os/exec"
   "encoding/json"
 )

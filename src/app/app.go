@@ -1,10 +1,10 @@
 package app
 
 import (
-  "awsmfacli/src/config"
-  "awsmfacli/src/credentials"
-  "awsmfacli/src/awsclient"
-  "awsmfacli/src/tokencode"
+  "awsmfacli/config"
+  "awsmfacli/credentials"
+  "awsmfacli/awsclient"
+  "awsmfacli/tokencode"
 )
 
 func ToCreds(c config.Config) credentials.Credentials {

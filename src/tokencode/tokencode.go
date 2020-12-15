@@ -1,7 +1,7 @@
 package tokencode
 
 import (
-  "awsmfacli/src/config"
+  "awsmfacli/config"
   "fmt"
 )
 

@@ -2,7 +2,7 @@ package config
 
 import (
   "io/ioutil"
-  "awsmfacli/src/filepaths"
+  "awsmfacli/filepaths"
   "encoding/json"
 )
 
