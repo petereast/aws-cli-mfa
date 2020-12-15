@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"os/user"
 	"reflect"
 	"strings"
 )
@@ -34,11 +35,16 @@ type CredentialWriter interface {
 }
 
 type ConfigReader interface {
-	getConfig(string) (Config, error)
+	getConfig() (Config, error)
 }
 
 type TokenCodeGetter interface {
 	getTokenCode(config Config) string
+}
+
+type FilePaths interface {
+	getConfigLocation() (string, error)
+	getAwsCredentialsLocation() (string, error)
 }
 
 type App struct {
@@ -49,7 +55,7 @@ type App struct {
 }
 
 func (app App) run() error {
-	cfg, err := app.configReader.getConfig("/Users/petereast/.aws/credentials")
+	cfg, err := app.configReader.getConfig()
 	if err != nil {
 		return err
 	}
@@ -79,41 +85,28 @@ func (c Config) ToCreds() Credentials {
 }
 
 // Cred writer
-type FileCredentialWriter struct{}
+type FileCredentialWriter struct {
+	filePaths FilePaths
+}
 
-func (_ FileCredentialWriter) writeCredentials(creds Credentials) (err error) {
-	err = ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", creds)), 0777)
+func (self FileCredentialWriter) writeCredentials(creds Credentials) (err error) {
+	path, err := self.filePaths.getAwsCredentialsLocation()
+	err = ioutil.WriteFile(path, []byte(ConfigEncoder("default", creds)), 0777)
 	return
 }
 
 // Config Getter
-type ConfigGetter struct{}
+type ConfigGetter struct {
+	filePaths FilePaths
+}
 
-func (_ ConfigGetter) getConfig(string) (config Config, err error) {
-	jsonBytes, err := ioutil.ReadFile("/Users/petereast/.aws-mfa.json")
+func (self ConfigGetter) getConfig() (config Config, err error) {
+	configPath, err := self.filePaths.getConfigLocation()
+	jsonBytes, err := ioutil.ReadFile(configPath)
 
 	err = json.Unmarshal(jsonBytes, &config)
 
 	return
-}
-
-// Done!
-func (credentials Credentials) WriteCredentials() {
-	ioutil.WriteFile("/Users/petereast/.aws/credentials", []byte(ConfigEncoder("default", credentials)), 0777)
-}
-
-func main() {
-	err := App{
-		awsClient:        AwsCliLoginClient{},
-		credentialWriter: FileCredentialWriter{},
-		configReader:     ConfigGetter{},
-		tokenCodeGetter:  ConsoleTokenCodeGetter{},
-	}.run()
-	if err != nil {
-		fmt.Println("Error! ", err)
-	} else {
-		fmt.Println("Done aaaaaaaaaaa!")
-	}
 }
 
 type AwsCliLoginClient struct{}
@@ -137,6 +130,31 @@ func (_ ConsoleTokenCodeGetter) getTokenCode(config Config) (tokenCode string) {
 
 	return
 }
+
+type UnixFilePaths struct{}
+
+func (_ UnixFilePaths) getHomedir() (homeDir string, err error) {
+	usr, err := user.Current()
+
+	homeDir = usr.HomeDir
+	return
+}
+
+func (self UnixFilePaths) getConfigLocation() (location string, err error) {
+	homeDir, err := self.getHomedir()
+
+	location = fmt.Sprintf("%s/.aws-mfa.json", homeDir)
+	return
+}
+
+func (self UnixFilePaths) getAwsCredentialsLocation() (location string, err error) {
+	homeDir, err := self.getHomedir()
+
+	location = fmt.Sprintf("%s/.aws/credentials", homeDir)
+	return
+}
+
+// Utilities
 
 func ConfigEncoder(title string, config interface{}) string {
 	// This will read the fields of the interface and create a config file
@@ -173,4 +191,19 @@ func ToSnakeCase(input string) string {
 	}
 
 	return output
+}
+
+func main() {
+	filePaths := UnixFilePaths{}
+	err := App{
+		awsClient:        AwsCliLoginClient{},
+		credentialWriter: FileCredentialWriter{filePaths: filePaths},
+		configReader:     ConfigGetter{filePaths: filePaths},
+		tokenCodeGetter:  ConsoleTokenCodeGetter{},
+	}.run()
+	if err != nil {
+		fmt.Println("Error! ", err)
+	} else {
+		fmt.Println("Done aaaaaaaaaaa!")
+	}
 }
