@@ -3,7 +3,8 @@
 A simple tool to handle logging into AWS using their MFA command thing.
 
 ## Usage
-- This application is self-contained, build and install it with `go build`.
+- This application is self-contained, it doesn't need anything at runtime apart from the config file detailed below.
+- You can build the binary with the following command: `cd src/ && go build main.go`, which will output an executable called `awsmfacli`. Put this binary somewhere in your `PATH` and you'll  be able to use it.
 
 ## Config
 This will expect you to have a json config file at `~/.aws-mfa.json`. This should take the following format:
